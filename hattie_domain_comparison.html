@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hattie's Visible Learning — 分野別効果量比較</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap');
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --border: #2a2a38;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --hinge: #ff6b35;
+
+    --col-student: #6ee7b7;
+    --col-teacher: #f59e0b;
+    --col-teaching: #818cf8;
+    --col-curricula: #f472b6;
+    --col-school: #38bdf8;
+    --col-home: #a78bfa;
+    --col-classroom: #34d399;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 2.5rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,15,19,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 3vw, 1.7rem);
+    letter-spacing: 0.02em;
+    font-weight: 700;
+  }
+
+  header h1 span {
+    color: var(--hinge);
+  }
+
+  .subtitle {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    color: #0f0f13;
+  }
+
+  .tab:not(.active) {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+
+  .tab:hover:not(.active) {
+    border-color: var(--muted);
+    color: var(--text);
+  }
+
+  main {
+    padding: 1.5rem 1.5rem 3rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Overview chart */
+  .overview-section {
+    margin-top: 1.5rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  /* Domain summary cards */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .domain-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .domain-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .domain-card.selected {
+    border-color: currentColor;
+  }
+
+  .domain-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: currentColor;
+    opacity: 0.8;
+  }
+
+  .domain-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .domain-name-en {
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 0.8rem;
+  }
+
+  .domain-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .mini-bar-container {
+    flex: 1;
+    align-self: flex-end;
+    padding-bottom: 4px;
+  }
+
+  .mini-bar-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .mini-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  .hinge-note {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+  }
+
+  .hinge-note strong {
+    color: var(--hinge);
+  }
+
+  /* Detail section */
+  .detail-section {
+    display: none;
+    margin-top: 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .detail-section.visible {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-title {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .detail-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* Horizontal bar chart */
+  .bar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .bar-item {
+    display: grid;
+    grid-template-columns: 200px 1fr 56px;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .bar-item:hover {
+    background: rgba(255,255,255,0.04);
+  }
+
+  .bar-name {
+    font-size: 0.75rem;
+    color: var(--text);
+    line-height: 1.3;
+    padding-right: 0.4rem;
+  }
+
+  .bar-track {
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hinge-line {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--hinge);
+    opacity: 0.6;
+    border-radius: 1px;
+  }
+
+  .bar-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    text-align: right;
+    color: var(--muted);
+  }
+
+  .bar-value.high {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .bar-item.negative .bar-fill {
+    background: #ef4444 !important;
+    opacity: 0.7;
+  }
+
+  .hinge-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .hinge-legend-line {
+    width: 18px;
+    height: 2px;
+    background: var(--hinge);
+    border-radius: 1px;
+  }
+
+  /* Comparison view */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .compare-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+  }
+
+  .compare-block-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+
+  .compare-block-en {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* Top picks */
+  .top-pick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .top-pick {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 0.6rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+  }
+
+  .top-pick-rank {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    width: 20px;
+    flex-shrink: 0;
+  }
+
+  .top-pick-name {
+    font-size: 0.78rem;
+    flex: 1;
+  }
+
+  .top-pick-domain-badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 999px;
+    opacity: 0.8;
+    color: #0f0f13;
+    flex-shrink: 0;
+  }
+
+  .top-pick-es {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Hattie's Visible Learning — <span>分野別 効果量比較</span></h1>
+  <p class="subtitle">Effect Size (Cohen's d) | Hinge Point = 0.40 | Dec 2017 data</p>
+  <div class="tabs">
+    <button class="tab active" onclick="showView('overview')" id="tab-overview">概要比較</button>
+    <button class="tab" onclick="showView('detail')" id="tab-detail">分野詳細</button>
+    <button class="tab" onclick="showView('top')" id="tab-top">全体Top 20</button>
+  </div>
+</header>
+
+<main>
+  <!-- OVERVIEW VIEW -->
+  <div id="view-overview">
+    <div class="overview-section">
+      <div class="section-label">分野別 平均効果量 & 最高値</div>
+      <div class="domain-grid" id="domainGrid"></div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="view-detail" style="display:none">
+    <div class="section-label" style="margin-top:1rem">分野を選択してください</div>
+    <div class="tabs" style="margin-top:0; margin-bottom:1.5rem" id="domainTabs"></div>
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- TOP 20 VIEW -->
+  <div id="view-top" style="display:none">
+    <div class="section-label" style="margin-top:1rem">全252介入 効果量トップ20</div>
+    <div class="hinge-legend">
+      <div class="hinge-legend-line"></div>
+      <span>d = 0.40 ヒンジポイント（この線以上が「効果あり」）</span>
+    </div>
+    <div class="bar-list" id="topList"></div>
+  </div>
+</main>
+
+<footer>Source: Hattie, J. Visible Learning (2009–2023) / visiblelearningplus.com DEC 2017 | Effect size = Cohen's d</footer>
+
+<script>
+const DOMAINS = {
+  student: {
+    label: '学習者',
+    en: 'STUDENT',
+    color: 'var(--col-student)',
+    hex: '#6ee7b7',
+    items: [
+      { name: 'Piagetian programs', ja: '発達段階に応じた指導', d: 1.28 },
+      { name: 'Self-reported grades', ja: '自己予測成績', d: 1.33 },
+      { name: 'Prior ability', ja: '事前の能力', d: 0.94 },
+      { name: 'Self-efficacy', ja: '自己効力感', d: 0.92 },
+      { name: 'Working memory strength', ja: 'ワーキングメモリ', d: 0.57 },
+      { name: 'Prior achievement', ja: '事前の学業成績', d: 0.55 },
+      { name: 'Deep motivation/approach', ja: '深い動機づけ', d: 0.69 },
+      { name: 'Concentration/persistence', ja: '集中・粘り強さ', d: 0.56 },
+      { name: 'Positive self-concept', ja: '肯定的自己概念', d: 0.41 },
+      { name: 'Motivation', ja: '動機づけ全般', d: 0.42 },
+      { name: 'Reducing anxiety', ja: '不安の低減', d: 0.42 },
+      { name: 'Field independence', ja: 'フィールド独立性', d: 0.68 },
+      { name: 'Perceived task value', ja: '課題価値の認識', d: 0.46 },
+      { name: 'Attitude to content domains', ja: '教科への態度', d: 0.35 },
+      { name: 'ADHD', ja: 'ADHD（負の影響）', d: -0.90 },
+      { name: 'Boredom', ja: '退屈感（負）', d: -0.49 },
+    ]
+  },
+  teacher: {
+    label: '教師',
+    en: 'TEACHER',
+    color: 'var(--col-teacher)',
+    hex: '#f59e0b',
+    items: [
+      { name: 'Teacher estimates of achievement', ja: '教師による達成予測', d: 1.29 },
+      { name: 'Teacher credibility', ja: '教師への信頼感', d: 0.90 },
+      { name: 'Micro-teaching / video review', ja: 'マイクロティーチング', d: 0.88 },
+      { name: 'Teacher clarity', ja: '教師の明確な説明', d: 0.75 },
+      { name: 'Teacher-student relationships', ja: '師弟関係の質', d: 0.52 },
+      { name: 'Teachers not labeling students', ja: 'ラベリングをしない', d: 0.61 },
+      { name: 'Student rating of teaching quality', ja: '授業の生徒評価', d: 0.50 },
+      { name: 'Teacher expectations', ja: '教師の期待', d: 0.43 },
+      { name: 'Professional development', ja: '専門的能力開発', d: 0.41 },
+      { name: 'Average teacher effects', ja: '平均的教師効果', d: 0.32 },
+      { name: 'Teacher subject matter knowledge', ja: '教科の専門知識', d: 0.11 },
+      { name: 'Teacher performance pay', ja: '成果給', d: 0.05 },
+    ]
+  },
+  teaching: {
+    label: '教授法',
+    en: 'TEACHING',
+    color: 'var(--col-teaching)',
+    hex: '#818cf8',
+    items: [
+      { name: 'Cognitive task analysis', ja: '認知的課題分析', d: 1.29 },
+      { name: 'Response to Intervention (RTI)', ja: '個別支援介入', d: 1.29 },
+      { name: 'Jigsaw method', ja: 'ジグソー法', d: 1.20 },
+      { name: 'Transfer strategies', ja: '転移戦略', d: 0.86 },
+      { name: 'Strategy to integrate w/ prior knowledge', ja: '既有知識との統合', d: 0.93 },
+      { name: 'Classroom discussion', ja: '授業内ディスカッション', d: 0.82 },
+      { name: 'Scaffolding', ja: 'スキャフォールディング', d: 0.82 },
+      { name: 'Deliberate practice', ja: '意図的な練習', d: 0.79 },
+      { name: 'Summarization', ja: '要約活動', d: 0.79 },
+      { name: 'Elaboration and organization', ja: '精緻化と構造化', d: 0.75 },
+      { name: 'Evaluation and reflection', ja: '振り返り・評価', d: 0.75 },
+      { name: 'Planning and prediction', ja: '計画・予測', d: 0.76 },
+      { name: 'Mnemonics', ja: '記憶術', d: 0.76 },
+      { name: 'Reciprocal teaching', ja: '相互教授法', d: 0.74 },
+      { name: 'Rehearsal and memorization', ja: 'リハーサル・記憶', d: 0.73 },
+      { name: 'Help seeking', ja: 'ヘルプシーキング', d: 0.72 },
+      { name: 'Feedback', ja: 'フィードバック', d: 0.70 },
+      { name: 'Problem-solving teaching', ja: '問題解決型教授', d: 0.68 },
+      { name: 'Direct instruction', ja: '直接教授法', d: 0.60 },
+      { name: 'Meta-cognitive strategies', ja: 'メタ認知戦略', d: 0.60 },
+      { name: 'Mastery learning', ja: '習得学習', d: 0.57 },
+      { name: 'Cooperative vs individualistic', ja: '協働 vs 個別学習', d: 0.55 },
+      { name: 'Practice testing', ja: 'テスト練習', d: 0.54 },
+      { name: 'Peer tutoring', ja: 'ピアチュータリング', d: 0.53 },
+      { name: 'Spaced vs. mass practice', ja: '間隔練習', d: 0.60 },
+      { name: 'Inquiry-based teaching', ja: '探究型教授', d: 0.40 },
+      { name: 'Problem-based learning', ja: '問題基盤型学習', d: 0.26 },
+      { name: 'Discovery-based teaching', ja: '発見学習', d: 0.21 },
+    ]
+  },
+  curricula: {
+    label: 'カリキュラム',
+    en: 'CURRICULA',
+    color: 'var(--col-curricula)',
+    hex: '#f472b6',
+    items: [
+      { name: 'Conceptual change programs', ja: '概念変容プログラム', d: 0.99 },
+      { name: 'Creativity programs', ja: '創造性プログラム', d: 0.62 },
+      { name: 'Vocabulary programs', ja: '語彙プログラム', d: 0.62 },
+      { name: 'Phonics instruction', ja: 'フォニクス指導', d: 0.70 },
+      { name: 'Repeated reading programs', ja: '反復読書プログラム', d: 0.75 },
+      { name: 'Comprehensive programs for teachers', ja: '教師向け総合プログラム', d: 0.72 },
+      { name: 'Mathematics programs', ja: '数学プログラム', d: 0.59 },
+      { name: 'Spelling programs', ja: 'スペリングプログラム', d: 0.58 },
+      { name: 'Tactile stimulation programs', ja: '触覚刺激プログラム', d: 0.58 },
+      { name: 'Visual-perception programs', ja: '視覚知覚プログラム', d: 0.55 },
+      { name: 'Play programs', ja: '遊びプログラム', d: 0.50 },
+      { name: 'Science programs', ja: '理科プログラム', d: 0.48 },
+      { name: 'Comprehension programs', ja: '読解プログラム', d: 0.47 },
+      { name: 'Integrated curricula', ja: '統合カリキュラム', d: 0.47 },
+      { name: 'Writing programs', ja: '作文プログラム', d: 0.45 },
+      { name: 'Enrichment programs', ja: '発展プログラム（才能教育）', d: 0.53 },
+      { name: 'Music programs', ja: '音楽プログラム', d: 0.37 },
+    ]
+  },
+  school: {
+    label: '学校',
+    en: 'SCHOOL',
+    color: 'var(--col-school)',
+    hex: '#38bdf8',
+    items: [
+      { name: 'Collective teacher efficacy', ja: '教師集団の効力感', d: 1.57 },
+      { name: 'Generalized school effects', ja: '学校全体の効果', d: 0.48 },
+      { name: 'School size (600–900 secondary)', ja: '適切な学校規模', d: 0.43 },
+      { name: 'Desegregation', ja: '学校統合', d: 0.28 },
+      { name: 'Counseling effects', ja: 'カウンセリング', d: 0.35 },
+      { name: 'Pre-school programs', ja: '就学前プログラム', d: 0.28 },
+      { name: 'External accountability systems', ja: '外部評価システム', d: 0.31 },
+      { name: 'Principals / school leaders', ja: '校長・学校リーダー', d: 0.32 },
+      { name: 'School climate', ja: '学校風土', d: 0.32 },
+      { name: 'School choice programs', ja: '学校選択制', d: 0.12 },
+      { name: 'Charter schools', ja: 'チャータースクール', d: 0.09 },
+      { name: 'Summer school', ja: '補習授業（夏期）', d: 0.23 },
+      { name: 'Finances', ja: '財政（予算）', d: 0.21 },
+    ]
+  },
+  home: {
+    label: '家庭',
+    en: 'HOME',
+    color: 'var(--col-home)',
+    hex: '#a78bfa',
+    items: [
+      { name: 'Socio-economic status', ja: '社会経済的地位（SES）', d: 0.52 },
+      { name: 'Positive family/home dynamics', ja: '良好な家庭環境', d: 0.52 },
+      { name: 'Parental involvement', ja: '保護者の関与', d: 0.50 },
+      { name: 'Early years interventions', ja: '幼少期の介入', d: 0.44 },
+      { name: 'Home visiting', ja: '家庭訪問', d: 0.29 },
+      { name: 'Television', ja: 'テレビ（負）', d: -0.18 },
+      { name: 'Moving between schools', ja: '転校（負）', d: -0.34 },
+    ]
+  },
+  classroom: {
+    label: '教室環境',
+    en: 'CLASSROOM',
+    color: 'var(--col-classroom)',
+    hex: '#34d399',
+    items: [
+      { name: 'Behavioral intervention programs', ja: '行動介入プログラム', d: 0.62 },
+      { name: 'Acceleration programs (gifted)', ja: '加速プログラム（才能）', d: 0.68 },
+      { name: 'Positive peer influences', ja: 'ポジティブな仲間の影響', d: 0.53 },
+      { name: 'Enrichment programs (gifted)', ja: '発展プログラム（才能）', d: 0.53 },
+      { name: 'Strong classroom cohesion', ja: '学級凝集性', d: 0.44 },
+      { name: 'Small group learning', ja: '小グループ学習', d: 0.47 },
+      { name: 'Classroom management', ja: '学級経営', d: 0.35 },
+      { name: 'Decreasing disruptive behavior', ja: '問題行動の低減', d: 0.34 },
+      { name: 'Mainstreaming / inclusion', ja: 'インクルーシブ教育', d: 0.27 },
+      { name: 'Reducing class size', ja: '少人数学級', d: 0.21 },
+      { name: 'Retention (holding back)', ja: '留年（負）', d: -0.32 },
+    ]
+  }
+};
+
+// Compute stats
+function domainStats(items) {
+  const valid = items.filter(i => i.d > 0);
+  const avg = valid.reduce((s, i) => s + i.d, 0) / valid.length;
+  const max = Math.max(...items.map(i => i.d));
+  const aboveHinge = valid.filter(i => i.d >= 0.40).length;
+  return { avg: +avg.toFixed(2), max, aboveHinge, total: items.length };
+}
+
+const MAX_D = 1.6;
+
+// Build overview
+function buildOverview() {
+  const grid = document.getElementById('domainGrid');
+  grid.innerHTML = '';
+  for (const [key, domain] of Object.entries(DOMAINS)) {
+    const stats = domainStats(domain.items);
+    const card = document.createElement('div');
+    card.className = 'domain-card';
+    card.style.color = domain.hex;
+    card.innerHTML = `
+      <div class="domain-name">${domain.label}</div>
+      <span class="domain-name-en">${domain.en}</span>
+      <div class="domain-stats">
+        <div class="stat">
+          <span class="stat-value" style="color:${domain.hex}">${stats.avg}</span>
+          <span class="stat-label">平均 d</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" style="color:${domain.hex}; font-size:1rem">${stats.max}</span>
+          <span class="stat-label">最大 d</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" style="color:${domain.hex}; font-size:1rem">${stats.aboveHinge}/${stats.total}</span>
+          <span class="stat-label">ヒンジ超え</span>
+        </div>
+        <div class="mini-bar-container">
+          <div class="mini-bar-track">
+            <div class="mini-bar-fill" style="width:${(stats.avg/MAX_D*100).toFixed(1)}%"></div>
+          </div>
+          <p class="hinge-note" style="margin-top:4px">最高 <strong>${stats.max}</strong></p>
+        </div>
+      </div>
+    `;
+    card.onclick = () => {
+      showView('detail');
+      showDomainDetail(key);
+    };
+    grid.appendChild(card);
+  }
+}
+
+// Build domain tabs
+function buildDomainTabs() {
+  const tabsEl = document.getElementById('domainTabs');
+  tabsEl.innerHTML = '';
+  for (const [key, domain] of Object.entries(DOMAINS)) {
+    const btn = document.createElement('button');
+    btn.className = 'tab';
+    btn.id = `dtab-${key}`;
+    btn.textContent = domain.label;
+    btn.onclick = () => showDomainDetail(key);
+    tabsEl.appendChild(btn);
+  }
+}
+
+let currentDomain = null;
+
+function showDomainDetail(key) {
+  currentDomain = key;
+  const domain = DOMAINS[key];
+  
+  // Update tab active state
+  document.querySelectorAll('#domainTabs .tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.background = '';
+    t.style.color = '';
+  });
+  const activeTab = document.getElementById(`dtab-${key}`);
+  if (activeTab) {
+    activeTab.classList.add('active');
+    activeTab.style.background = domain.hex;
+    activeTab.style.color = '#0f0f13';
+  }
+
+  const sorted = [...domain.items].sort((a, b) => b.d - a.d);
+  const stats = domainStats(domain.items);
+
+  const content = document.getElementById('detailContent');
+  content.innerHTML = `
+    <div class="compare-block" style="border-color:${domain.hex}33; margin-bottom:1rem">
+      <div class="detail-header">
+        <div>
+          <div class="detail-title" style="color:${domain.hex}">${domain.label} <span style="color:var(--muted); font-size:0.7rem; font-family:'DM Mono',monospace">${domain.en}</span></div>
+        </div>
+        <div style="display:flex; gap:1.2rem; margin-left:auto">
+          <div class="stat"><span class="stat-value" style="color:${domain.hex}; font-size:1.1rem">${stats.avg}</span><span class="stat-label">平均 d</span></div>
+          <div class="stat"><span class="stat-value" style="color:${domain.hex}; font-size:1.1rem">${stats.aboveHinge}/${stats.total}</span><span class="stat-label">ヒンジ超え</span></div>
+        </div>
+      </div>
+      <div class="hinge-legend">
+        <div class="hinge-legend-line"></div>
+        <span>オレンジの縦線 = ヒンジポイント d=0.40</span>
+      </div>
+      <div class="bar-list">
+        ${sorted.map(item => {
+          const isNeg = item.d < 0;
+          const pct = Math.abs(item.d) / MAX_D * 100;
+          const hingePct = 0.40 / MAX_D * 100;
+          return `
+          <div class="bar-item${isNeg ? ' negative' : ''}">
+            <div class="bar-name">${item.ja}<br><span style="font-size:0.62rem; color:var(--muted)">${item.name}</span></div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${pct}%; background:${isNeg ? '#ef4444' : domain.hex}; opacity:${item.d >= 0.4 ? 0.85 : 0.4}"></div>
+              <div class="hinge-line" style="left:${hingePct}%"></div>
+            </div>
+            <div class="bar-value${item.d >= 0.8 ? ' high' : ''}">${item.d.toFixed(2)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// Build top list
+function buildTopList() {
+  const all = [];
+  for (const [key, domain] of Object.entries(DOMAINS)) {
+    for (const item of domain.items) {
+      all.push({ ...item, domainKey: key, domainLabel: domain.label, domainHex: domain.hex });
+    }
+  }
+  all.sort((a, b) => b.d - a.d);
+  const top20 = all.slice(0, 20);
+
+  const container = document.getElementById('topList');
+  const hingePct = 0.40 / MAX_D * 100;
+
+  container.innerHTML = top20.map((item, i) => `
+    <div class="bar-item">
+      <div class="bar-name">
+        <span style="color:var(--muted); font-size:0.65rem; margin-right:4px">#${i+1}</span>
+        ${item.ja}<br>
+        <span style="font-size:0.62rem; color:var(--muted)">${item.name}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(item.d/MAX_D*100).toFixed(1)}%; background:${item.domainHex}; opacity:0.8"></div>
+        <div class="hinge-line" style="left:${hingePct}%"></div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px">
+        <span class="bar-value high">${item.d.toFixed(2)}</span>
+        <span style="font-size:0.58rem; padding:1px 5px; border-radius:999px; background:${item.domainHex}22; color:${item.domainHex}">${item.domainLabel}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showView(name) {
+  document.getElementById('view-overview').style.display = name === 'overview' ? 'block' : 'none';
+  document.getElementById('view-detail').style.display = name === 'detail' ? 'block' : 'none';
+  document.getElementById('view-top').style.display = name === 'top' ? 'block' : 'none';
+  ['overview','detail','top'].forEach(v => {
+    document.getElementById(`tab-${v}`).classList.toggle('active', v === name);
+  });
+  if (name === 'detail' && !currentDomain) {
+    showDomainDetail('teaching');
+  }
+}
+
+// Init
+buildOverview();
+buildDomainTabs();
+buildTopList();
+</script>
+</body>
+</html>
