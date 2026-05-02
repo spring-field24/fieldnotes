@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>算数授業・指導タイプ判定 (Domain 1)</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; max-width: 1000px; margin: 20px auto; padding: 20px; background-color: #f8f9fa; color: #333; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; text-align: center; }
+        
+        #title-screen { text-align: center; padding: 40px 0; }
+        .start-btn { padding: 18px 60px; font-size: 1.2em; font-weight: bold; color: white; background: #3498db; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; }
+        .start-btn:hover { background: #2980b9; transform: translateY(-3px); }
+
+        .question-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .scene-box { 
+            flex: 1; 
+            background: #eef9f1; 
+            padding: 20px; 
+            border-left: 6px solid #2ecc71; 
+            border-radius: 4px;
+            min-height: 200px;
+        }
+
+        .image-container { 
+            flex: 1; 
+            height: 300px; 
+            background: #fff; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: 1px solid #dee2e6; 
+        }
+        .image-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        @media (max-width: 768px) {
+            .question-container { flex-direction: column-reverse; }
+            .image-container { width: 100%; height: 250px; }
+        }
+
+        .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; text-align: left; cursor: pointer; background: #fff; font-size: 16px; transition: 0.2s; }
+        .option:hover { background: #f0f7f2; border-color: #2ecc71; transform: translateX(5px); }
+        
+        .hidden { display: none; }
+        .score-display { text-align: center; font-size: 1.2em; color: #7f8c8d; margin-top: 10px; }
+        .type-badge { font-size: 2em; font-weight: bold; color: #e67e22; display: block; margin: 15px 0; text-align: center; }
+        .advice-box { background: #f0f7f2; border-left: 5px solid #2ecc71; padding: 25px; margin: 20px 0; }
+        .step-up { color: #27ae60; font-weight: bold; border-top: 1px solid #c8e6c9; margin-top: 15px; padding-top: 15px; }
+        
+        .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; }
+        .feedback-item { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; font-size: 0.9em; }
+        .feedback-item h4 { margin: 0 0 10px 0; color: #2ecc71; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div id="game-container" class="card">
+    <div id="title-screen">
+        <h1>算数授業・指導タイプ診断</h1>
+        <p>Domain 1: Number (1年生「数」の指導)</p>
+        <button class="start-btn" onclick="startGame()">診断をはじめる</button>
+    </div>
+
+    <div id="question-area" class="hidden">
+        <div class="question-container">
+            <div class="scene-box">
+                <b id="scene-id" style="color: #27ae60; display: block; margin-bottom: 10px;"></b>
+                <div id="scene-text" style="font-size: 1.1em;"></div>
+            </div>
+            <div class="image-container">
+                <img id="scene-image" src="" alt="授業シーン">
+            </div>
+        </div>
+        <div id="options-area"></div>
+    </div>
+
+    <div id="result-area" class="hidden">
+        <h2 style="text-align:center; margin-bottom: 5px;">診断結果</h2>
+        <div id="final-score" class="score-display"></div>
+        <div class="image-container" style="height: 400px; width: 100%; margin-top: 20px;"><img id="result-image" src="" alt="指導タイプ"></div>
+        <span id="type-result" class="type-badge"></span>
+        
+        <div class="advice-box">
+            <div id="type-advice" style="margin-bottom: 15px;"></div>
+            <div id="step-up-comment" class="step-up"></div>
+        </div>
+
+        <div class="feedback-grid">
+            <div class="feedback-item"><h4>① 間違いの分析</h4>子供の誤解を否定せず、その思考回路をクラスの学びに変える姿勢が教室の安心感を作ります。</div>
+            <div class="feedback-item"><h4>② 具体物の活用</h4>教具を自ら動かし、納得する時間を確保することで、抽象概念が本物の知識に変わります。</div>
+            <div class="feedback-item"><h4>③ 言語化の促進</h4>答えを教えるのを我慢し、子供の言葉を待つ忍耐が、数学的な自信を育む肥料になります。</div>
+            <div class="feedback-item"><h4>④ 児童間の比較検討</h4>多様な考えを並べ、その「ズレ」を面白がりながら納得解を作るプロセスが学びの核です。</div>
+            <div class="feedback-item" style="grid-column: 1 / span 2;"><h4>⑤ 全体での探究</h4>一人の気づきを「（数字が変わっても）いつでも言えるかな？」と普遍化を促すことで、個人の学びをクラス全員の財産に昇華させましょう。</div>
+        </div>
+        <button style="display:block; width:220px; margin:30px auto; padding:12px; cursor:pointer; background:#2ecc71; color:white; border:none; border-radius:25px; font-weight:bold;" onclick="location.reload()">もう一度診断する</button>
+    </div>
+</div>
+
+<script>
+const IMAGES = {
+    scenes: { "1-1": "Q1.jpg", "1-2": "Q2.jpg", "1-3": "Q3.jpg", "1-4": "Q4.jpg", "1-5": "Q5.jpg" },
+    results: { type1: "T.Lv1.jpg", type2: "T.Lv2.jpg", type3: "T.Lv3.jpg", type4: "T.Lv4.jpg", type5: "T.Lv5.jpg" }
+};
+
+// 添付資料の「平均」列に基づいた配点
+const questions = [
+    { id: "1-1", title: "順序数と集合数", scene: "5人の子供が並んでいます。先生が「前から3番目の人に帽子をかぶせてください」と言いました。一人の児童が、前から3人目までの「3人全員」に帽子をかぶせようとしています。", options: [
+        { text: "「3人ではなく、3番目の人だけだよ」と正答を指摘し、正しい位置の子にかぶせ直させる。", p: 2.0 },
+        { text: "「『3人の時』と『3番目の時』は何が違うかな？」とクラス全員に問い、図や動作でその境界線を議論させる。", p: 8.7 },
+        { text: "黒板に「3人」と「3番目」の図を描き、それぞれの言葉が指す範囲の違いを教師が解説して納得させる。", p: 4.7 },
+        { text: "教師が「1、2、3...」と順番に立たせ、「3で止まって。この人だよ」とお膳立てをして操作を体験させる。", p: 6.7 }
+    ]},
+    { id: "1-2", title: "計数（1対1対応）", scene: "机の上にバラバラに置かれた10個ほどのおはじきを数えています。一人の児童が、一度数えたものをまた数えたり、飛ばしたりしてしまい、数えるたびに答えが変わっています。", options: [
+        { text: "「先生が数えたら10個だったよ。もう一度ゆっくり指と数字を合わせて数え直しなさい」と指示する。", p: 3.3 },
+        { text: "「数えた石は別の場所へ移すと間違いなくなるよ」と、ズレを解消するテクニックを教え、その手順通りにやり直させる。", p: 6.7 },
+        { text: "「10個だったんだね。じゃあ、他の友達にも分かるように、1から順に石を並べながらもう一度数えて見せてくれる？」と、具体的操作を再定義させ、ズレを自分で発見させる場を作る。", p: 9.3 },
+        { text: "「Aさんは12個、Bさんは10個になったみたい。どうして答えが分かれたのかな？」と、異なる結果をクラス全体に提示し、正解な数え方を探究させる。", p: 8.0 }
+    ]},
+    { id: "1-3", title: "補数（10の構成）", scene: "黒板には、児童が見つけた「あわせて10」のペア（5と5、2と8など）のカードがバラバラに貼られています。全部出揃ったようですが、規則性には誰も気付いていません。", options: [
+        { text: "「バラバラだと覚えにくいから、左が1,2,3...と増えていく順に並べなさい」と指示し、完成した表をノートに写させる。", p: 3.3 },
+        { text: "教師がカードを左から1の順に並べかえ、「左が1増えると右が1減るんだね。このきまりを覚えよう」と解説する。", p: 5.3 },
+        { text: "「このバラバラなペアの中に、抜けがないか確かめる方法はないかな？」と問い、児童から出た「並べる」という戦略でルールを発見させる。", p: 9.7 },
+        { text: "教師がカードを1から順に並べかえた上で、「並べる前と後で、何が変わったかな？」と問い、増減の連動性を児童の言葉で説明させる。", p: 7.3 }
+    ]},
+    { id: "1-4", title: "大小比較", scene: "「象が3頭」と「蟻が5匹」の絵を見せて「どちらが多い？」と聞きました。「象が大きいから多い！」と、体の大きさに引きずられている子がいます。", options: [
+        { text: "「大きさではなく、数を数えるんだよ。5は3より大きい数だから、蟻の方が多いんだよ」と、算数のルールとして正解を教える。", p: 2.0 },
+        { text: "象と蟻を、同じ大きさの「丸（●）」に置き換えた図を提示し、「これならどちらが多いか一目でわかるね」と誘導する。", p: 5.3 },
+        { text: "「象1頭と蟻1匹をペアにして線でつないでいこう」と促し、数がいかなくなっても線が余る様子から、「多い」の意味を考えさせる。", p: 9.0 },
+        { text: "「みんなは何を見て『多い』と決めたの？体の大きさかな、それとも数かな？」と、判定の基準を問い直し、クラス全体でルールを相談させる。", p: 8.0 }
+    ]},
+    { id: "1-5", title: "数学的構造（求残）", scene: "10人の列で「マリさんの前に6人。後ろは何人？」という問いに、4人派と3人派で意見が割れています。何が起きているか分からず固まっている子も数名います。", options: [
+        { text: "10個の丸を描き、「前の6人とマリさんを合わせると7人。10から7を引くから残りは3人だね」と図を使って教師が全て解説する。", p: 2.7 },
+        { text: "10個の丸に、前6人とマリさんに色をつけた完成図を見せ、「色のついていない方は何人かな？」と正解を数えさせる。", p: 5.3 },
+        { text: "10個の丸を描き、「4人」と答えた子らに「この図のどこにマリさんがいるかな？」と問い、自力で図を修正させる。", p: 8.0 },
+        { text: "異なる考えを持つ子らに自分の図で説明する場を与え、聞き合うことでクラス全体の納得解を構成していく。", p: 8.7 }
+    ]}
+];
+
+let currentIdx = 0;
+let totalScore = 0;
+
+function startGame() {
+    document.getElementById('title-screen').classList.add('hidden');
+    document.getElementById('question-area').classList.remove('hidden');
+    showQuestion();
+}
+
+function showQuestion() {
+    const q = questions[currentIdx];
+    document.getElementById('scene-image').src = IMAGES.scenes[q.id];
+    document.getElementById('scene-id').innerText = `${q.id} 【${q.title}】`;
+    document.getElementById('scene-text').innerText = q.scene;
+    const area = document.getElementById('options-area');
+    area.innerHTML = '';
+    q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = opt.text;
+        btn.onclick = () => { totalScore += opt.p; currentIdx++; if(currentIdx < questions.length) showQuestion(); else showResult(); };
+        area.appendChild(btn);
+    });
+}
+
+function showResult() {
+    document.getElementById('question-area').classList.add('hidden');
+    document.getElementById('result-area').classList.remove('hidden');
+    const avg = (totalScore / questions.length).toFixed(1);
+    
+    document.getElementById('final-score').innerText = `あなたの平均スコア：${avg} 点`;
+    
+    let key, type, adv, step;
+    // 10点満点スケールに合わせた境界値調整
+    if (avg <= 3.5) { 
+        key="type1"; type="1. 教示型"; 
+        adv="教科書の通りに正しい知識を伝えることを重視した、伝統的で安定感のあるスタイルです。間違いを即座に修正することで、児童に誤った知識が定着するのを防いでいます。"; 
+        step="さらに、正答を教え始める前に「どうしてそう考えたのかな？」と一言問いかけて子供の考えを可視化するようにすると、子供の思考が活性化されます。"; 
+    }
+    else if (avg <= 5.5) { 
+        key="type2"; type="2. ナビゲート型"; 
+        adv="児童に活動や具体物の操作をさせつつも、効率を重視して、最終的な正解やまとめの言葉を教師がリードしています。児童は活動を楽しみながら、スムーズに正解にたどり着くことができています。"; 
+        step="さらに、具体物の操作そのもので満足せず、それを「図」や「言葉」に置き換えて説明させる時間を増やすと、算数的な抽象化の能力がより育つようになります。"; 
+    }
+    else if (avg <= 7.5) { 
+        key="type3"; type="3. 過渡型"; 
+        adv="子供の主体的・対話的な学びを目指した、チャレンジングなスタイルです。子供同士のやり取りを促す場面も多いですが、時間の制約などから教師が議論を整理しすぎてしまう傾向があります。"; 
+        step="さらに、一人の良い気づきが出た際に、教師が「〜ということだね」とまとめず、「今のA君の言葉、みんなはどう思う？」とあえて子供側に投げ返すようにすると、より深い学び合いが生まれます。"; 
+    }
+    else if (avg <= 8.8) { 
+        key="type4"; type="4. 伴走型"; 
+        adv="児童の多様な考えを価値づけ、クラス全体でじっくりと比較・検討する時間を大切にしています。間違いやズレを学びの種として活用できており、教室に「みんなで考える」という文化が根付いています。"; 
+        step="さらに、ある問題が解決したあとに「もし数字や場面が変わっても、同じことが言えるかな？」と一般化を促す問いを立てると、子供の思考がさらに広く深いものになります。"; 
+    }
+    else { 
+        key="type5"; type="5. 探求支援型"; 
+        adv="教師は「教え手」というよりも、児童の探求を支えるファシリテーターに徹しています。子供たちが自律的に問いを立て、お互いの意見を引用しながら論理を組み立てていく、理想的な学習集団が形成されています。"; 
+        step="今のスタイルを継続しながら、同様の「問いの構成」を他学年や異なる単元でも応用し、実践の幅を広げていかれると、学校全体の算数教育の質の向上につながります。"; 
+    }
+
+    document.getElementById('result-image').src = IMAGES.results[key];
+    document.getElementById('type-result').innerText = type;
+    document.getElementById('type-advice').innerText = adv;
+    document.getElementById('step-up-comment').innerText = `🚩 Advice：${step}`;
+}
+</script>
+</body>
+</html>
